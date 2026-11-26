@@ -6,20 +6,8 @@ on:
 
 jobs:
   deploy:
-    runs-on: self-hosted
-    steps:
-      - name: Download Code
-        uses: actions/checkout@v4
-
-      - name: Copy Files to Deploy Folder
-        shell: powershell
-        run: |
-          New-Item -ItemType Directory -Force -Path C:\deploy-demo
-          Copy-Item -Path .\* -Destination C:\deploy-demo -Recurse -Force
-
-      - name: Close Existing App and Start New App
-        shell: powershell
-        run: |
-          Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force
-          $env:RUNNER_TRACKING_ID = ""
-          Start-Process node -ArgumentList "C:\deploy-demo\app.js" -WindowStyle Hidden
+    uses: ./.github/workflows/reusable-deploy.yml
+    with:
+      app_name: deploy-demo
+      deploy_path: C:\deploy-demo
+      start_file: app.js
