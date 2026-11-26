@@ -1,0 +1,37 @@
+name: Reusable Deploy
+
+on:
+  workflow_call:
+    inputs:
+      app_name:
+        required: true
+        type: string
+      deploy_path:
+        required: true
+        type: string
+      start_file:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    concurrency:
+      group: deploy-${{ inputs.app_name }}
+      cancel-in-progress: false
+    steps:
+      - name: Download Code
+        uses: actions/checkout@v4
+
+      - name: Copy Files to Deploy Folder
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path "${{ inputs.deploy_path }}"
+          Copy-Item -Path .\* -Destination "${{ inputs.deploy_path }}" -Recurse -Force
+
+      - name: Close Existing App and Start New App
+        shell: powershell
+        run: |
+          Get-CimInstance Win32_Process -Filter "name='node.exe'" | Where-Object { $_.CommandLine -like "*${{ inputs.deploy_path }}*" } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+          $env:RUNNER_TRACKING_ID = ""
+          Start-Process node -ArgumentList "${{ inputs.deploy_path }}\${{ inputs.start_file }}" -WindowStyle Hidden
