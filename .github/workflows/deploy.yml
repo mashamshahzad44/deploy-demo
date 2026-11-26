@@ -1,0 +1,24 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Code download karo
+        uses: actions/checkout@v4
+
+      - name: Files deploy folder mein copy karo
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path C:\deploy-demo
+          Copy-Item -Path .\* -Destination C:\deploy-demo -Recurse -Force
+
+      - name: Purani app band karo aur nayi chalao
+        shell: powershell
+        run: |
+          Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force
+          Start-Process node -ArgumentList "C:\deploy-demo\app.js" -WindowStyle Hidden
